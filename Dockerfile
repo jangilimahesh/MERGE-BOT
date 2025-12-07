@@ -1,25 +1,22 @@
-FROM ubuntu:latest
+# Use Python base image
+FROM python:3.10-slim
 
-WORKDIR /usr/src/mergebot
-RUN chmod 777 /usr/src/mergebot
-RUN apt-get -y update && apt-get -y upgrade && apt-get install apt-utils -y && \
+# Update and install ffmpeg + system tools
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-    apt-get install -y python3 python3-pip git \
+# Set work directory
+WORKDIR /app
 
-    p7zip-full p7zip-rar xz-utils wget curl pv jq \
-
-    ffmpeg unzip neofetch mediainfo
-    && apt-get clean
-
-## To enable rclone upload, uncommnet the following line; 
-# RUN curl https://rclone.org/install.sh | bash
-
-RUN python3 -m venv venv && chmod +x venv/bin/python
-
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Copy project files
 COPY . .
 
-RUN chmod +x start.sh
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["bash","start.sh"]
+# Expose port (Railway requires a port even if bot does not use HTTP)
+EXPOSE 8080
+
+# Run the bot
+CMD ["python", "bot.py"]
